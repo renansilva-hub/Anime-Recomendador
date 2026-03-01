@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Anime Recommender</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+    --bg-dark: #0f0f1a;
+    --card-bg: rgba(255,255,255,0.06);
+    --primary: #6c5ce7;
+    --secondary: #ff7675;
+    --text-main: #f1f2f6;
+    --text-muted: #a4b0be;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #09090e, #1a1a2e);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    color: var(--text-main);
+}
+
+.app {
+    width: 100%;
+    max-width: 700px;
+    background: var(--card-bg);
+    backdrop-filter: blur(14px);
+    border-radius: 26px;
+    padding: 45px 35px 50px;
+    box-shadow: 0 30px 70px rgba(0,0,0,0.55);
+    position: relative;
+    overflow: hidden;
+}
+
+.app::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    height: 5px;
+    width: 100%;
+    background: linear-gradient(90deg, var(--secondary), var(--primary));
+}
+
+.back-btn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-weight: 500;
+    display: none;
+}
+
+.back-btn:hover {
+    color: var(--secondary);
+}
+
+.progress {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    margin-bottom: 30px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--secondary), var(--primary));
+    transition: width .4s ease;
+}
+
+.question {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 35px;
+    line-height: 1.4;
+}
+
+.options {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.option-btn {
+    padding: 18px 22px;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-main);
+    font-size: 1.05rem;
+    cursor: pointer;
+    transition: all .3s ease;
+}
+
+.option-btn:hover {
+    background: var(--primary);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(108,92,231,0.45);
+}
+
+.result {
+    display: none;
+    text-align: center;
+}
+
+.result img {
+    max-width: 230px;
+    border-radius: 16px;
+    margin-bottom: 25px;
+    box-shadow: 0 20px 40px rgba(0,0,0,.6);
+}
+
+.result h1 {
+    font-size: 2.2rem;
+    background: linear-gradient(90deg, var(--secondary), var(--primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.result p {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin: 25px 0 35px;
+}
+
+.restart {
+    border: 2px solid var(--secondary);
+    background: none;
+    color: var(--secondary);
+    padding: 14px 30px;
+    border-radius: 30px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .3s ease;
+}
+
+.restart:hover {
+    background: var(--secondary);
+    color: white;
+}
+
+.fade {
+    animation: fade .4s ease;
+}
+
+@keyframes fade {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+    <button class="back-btn" id="backBtn">← Voltar</button>
+
+    <div class="progress">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div id="questionArea">
+        <div class="question" id="questionText"></div>
+        <div class="options" id="options"></div>
+    </div>
+
+    <div class="result" id="resultArea">
+        <img id="resultImg">
+        <h1 id="resultTitle"></h1>
+        <p id="resultDesc"></p>
+        <button class="restart" onclick="start()">Refazer teste</button>
+    </div>
+</div>
+
+<script>
+const data = {
+    start: {
+        q: "Como você prefere começar sua jornada?",
+        o: [
+            ["🔥 Clássicos essenciais", "top"],
+            ["🧭 Escolher por gênero", "genre"]
+        ]
+    },
+    top: {
+        q: "Qual dessas premissas te atrai mais?",
+        o: [
+            ["⚗️ Alquimia e drama épico", "fma"],
+            ["🚀 Faroeste espacial", "bebop"],
+            ["📓 Thriller psicológico", "death"]
+        ]
+    },
+    genre: {
+        q: "Qual clima você quer hoje?",
+        o: [
+            ["⚔️ Ação intensa", "action"],
+            ["💖 Romance e leveza", "romance"],
+            ["🕵️ Mistério e suspense", "thriller"]
+        ]
+    },
+
+    action: { q:"Escolha seu estilo:", o:[["🔥 Moderno","demon"],["🏴‍☠️ Longo","onepiece"]] },
+    romance: { q:"O que procura?", o:[["💘 Romance escolar","toradora"],["🌿 Relaxante","yuru"]] },
+    thriller:{ q:"Prefere:", o:[["🧠 Jogos mentais","death"],["⏳ Viagem no tempo","erased"]] },
+
+    fma: r("Fullmetal Alchemist: Brotherhood","https://cdn.myanimelist.net/images/anime/1208/94745l.jpg","Equilíbrio perfeito entre ação, emoção e política."),
+    bebop: r("Cowboy Bebop","https://cdn.myanimelist.net/images/anime/4/19644l.jpg","Clássico espacial com trilha sonora lendária."),
+    death: r("Death Note","https://cdn.myanimelist.net/images/anime/9/84460l.jpg","Um duelo intelectual tenso e viciante."),
+    demon: r("Demon Slayer","https://cdn.myanimelist.net/images/anime/1286/99889l.jpg","Animação espetacular e ação intensa."),
+    onepiece: r("One Piece","https://cdn.myanimelist.net/images/anime/6/73245l.jpg","A maior aventura shounen já criada."),
+    toradora: r("Toradora!","https://cdn.myanimelist.net/images/anime/13/22128l.jpg","Romance escolar com muita evolução emocional."),
+    yuru: r("Laid-Back Camp","https://cdn.myanimelist.net/images/anime/4/89877l.jpg","Relaxamento puro para a alma."),
+    erased: r("ERASED","https://cdn.myanimelist.net/images/anime/10/77957l.jpg","Mistério emocional com viagem no tempo.")
+};
+
+function r(title,img,desc){ return {title,img,desc}; }
+
+let stack = [];
+let current = "start";
+
+const qText = document.getElementById("questionText");
+const options = document.getElementById("options");
+const qArea = document.getElementById("questionArea");
+const rArea = document.getElementById("resultArea");
+const bar = document.getElementById("progressBar");
+const back = document.getElementById("backBtn");
+
+function render(node){
+    current = node;
+    updateProgress();
+    back.style.display = stack.length ? "block":"none";
+
+    if(data[node].q){
+        qArea.style.display="block";
+        rArea.style.display="none";
+        qText.innerText = data[node].q;
+        options.innerHTML="";
+        data[node].o.forEach(o=>{
+            const b=document.createElement("button");
+            b.className="option-btn fade";
+            b.innerText=o[0];
+            b.onclick=()=>{ stack.push(node); render(o[1]); };
+            options.appendChild(b);
+        });
+    } else {
+        qArea.style.display="none";
+        rArea.style.display="block";
+        resultImg.src=data[node].img;
+        resultTitle.innerText=data[node].title;
+        resultDesc.innerText=data[node].desc;
+    }
+}
+
+function updateProgress(){
+    bar.style.width=Math.min(stack.length*20,100)+"%";
+}
+
+back.onclick=()=>render(stack.pop());
+function start(){ stack=[]; render("start"); }
+start();
+</script>
+
+</body>
+</html>
